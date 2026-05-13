@@ -1,0 +1,22 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Keep raw and generated data out of Docker image layers.
+data/raw/*
+data/processed/*
+data/output/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/output/.gitkeep
+
+notebooks/.ipynb_checkpoints
+.env
+.env.*
+kaggle.json
+streamlit_*.log

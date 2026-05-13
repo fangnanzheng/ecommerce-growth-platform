@@ -1,0 +1,10 @@
+name: ecommerce-growth
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - openjdk=17
+  - pip
+  - pip:
+      - -r requirements.txt

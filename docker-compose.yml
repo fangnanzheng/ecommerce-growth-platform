@@ -1,0 +1,21 @@
+services:
+  dashboard:
+    build: .
+    container_name: ecommerce-growth-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app
+
+  pipeline:
+    build: .
+    container_name: ecommerce-growth-pipeline
+    profiles:
+      - batch
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app
+    command: ["python", "-m", "src.run_pipeline", "--engine", "pandas"]
