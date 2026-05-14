@@ -2,6 +2,8 @@
 
 An end-to-end analytics product built on the Olist Brazilian E-Commerce Dataset. The project demonstrates how ambiguous marketplace growth goals can be translated into a reproducible data pipeline, growth dashboard, repeat-purchase model, demand forecast, experiment readout, automated Excel report, and Dockerized deployment path.
 
+The demo website can be accessed via [http://124.222.219.226:8501](http://124.222.219.226:8501).
+
 ## What This Project Shows
 
 - **Data engineering:** raw CSV ingestion, feature tables, data quality checks, and one-command pipeline orchestration.
