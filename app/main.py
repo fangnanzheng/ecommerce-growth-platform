@@ -51,18 +51,27 @@ def apply_theme() -> None:
         [data-testid="stSidebar"] {
             background: #111827;
             border-right: 1px solid rgba(148, 163, 184, 0.16);
-            min-width: 430px;
-            max-width: 430px;
         }
 
         [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] {
-            max-height: 17rem;
-            overflow-y: auto;
             align-items: flex-start;
         }
 
-        [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+        [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] > div:first-child {
             align-items: flex-start;
+            align-content: flex-start;
+            max-height: 14rem;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] > div:first-child::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] > div:first-child::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.45);
+            border-radius: 999px;
         }
 
         [data-testid="stAppViewContainer"] .main .block-container {
