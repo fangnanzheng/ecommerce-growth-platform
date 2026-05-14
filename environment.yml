@@ -7,4 +7,4 @@ dependencies:
   - openjdk=17
   - pip
   - pip:
-      - -r requirements.txt
+      - -r requirements-spark.txt

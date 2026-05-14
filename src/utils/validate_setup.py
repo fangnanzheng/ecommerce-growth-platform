@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import argparse
 import os
 import platform
 import shutil
@@ -17,7 +18,6 @@ RAW_DIR = ROOT_DIR / "data" / "raw"
 PYTHON_PACKAGES = {
     "pandas": "pandas",
     "numpy": "numpy",
-    "pyspark": "pyspark",
     "sklearn": "scikit-learn",
     "scipy": "scipy",
     "statsmodels": "statsmodels",
@@ -25,6 +25,10 @@ PYTHON_PACKAGES = {
     "plotly": "plotly",
     "openpyxl": "openpyxl",
     "pyarrow": "pyarrow",
+}
+
+SPARK_PACKAGES = {
+    "pyspark": "pyspark",
 }
 
 
@@ -40,9 +44,13 @@ def check_python_version() -> list[str]:
     return messages
 
 
-def check_packages() -> list[str]:
+def check_packages(include_spark: bool = False) -> list[str]:
     messages = []
-    for import_name, package_name in PYTHON_PACKAGES.items():
+    package_map = dict(PYTHON_PACKAGES)
+    if include_spark:
+        package_map.update(SPARK_PACKAGES)
+
+    for import_name, package_name in package_map.items():
         if importlib.util.find_spec(import_name):
             messages.append(f"[OK] Python package installed: {package_name}")
         else:
@@ -85,12 +93,21 @@ def check_raw_files() -> list[str]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Validate local project setup.")
+    parser.add_argument(
+        "--with-spark",
+        action="store_true",
+        help="Also validate optional PySpark and Java runtime requirements.",
+    )
+    args = parser.parse_args()
+
     sections = {
         "Python": check_python_version(),
-        "Packages": check_packages(),
-        "Java": check_java(),
+        "Packages": check_packages(include_spark=args.with_spark),
         "Raw data": check_raw_files(),
     }
+    if args.with_spark:
+        sections["Java"] = check_java()
 
     for section, messages in sections.items():
         print(f"\n{section}")

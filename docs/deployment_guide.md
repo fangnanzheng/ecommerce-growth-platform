@@ -22,7 +22,7 @@ Install Docker and Docker Compose on the server, then clone the repository:
 
 ```bash
 git clone <YOUR_REPO_URL>
-cd ecommerce_growth_platform
+cd ecommerce-growth-platform
 ```
 
 Upload raw Kaggle CSV files to:
@@ -76,4 +76,5 @@ docker compose down
 
 - `data/` is mounted as a volume, so generated files persist outside the Docker image.
 - `.dockerignore` excludes raw and generated data from image layers.
+- The Docker image intentionally uses the lightweight pandas pipeline dependencies. PySpark remains available for local demos through `requirements-spark.txt` / `environment.yml`.
 - For a public demo, restrict access to the Streamlit port through firewall/security group rules if needed.

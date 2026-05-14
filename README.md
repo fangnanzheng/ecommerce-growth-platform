@@ -44,10 +44,16 @@ conda env create -f environment.yml
 conda activate ecommerce-growth
 ```
 
-Validate local setup:
+Validate the default local setup:
 
 ```bash
 python -m src.utils.validate_setup
+```
+
+Validate optional Spark support:
+
+```bash
+python -m src.utils.validate_setup --with-spark
 ```
 
 Run the full pipeline:
@@ -69,6 +75,8 @@ http://localhost:8501
 ```
 
 ## Docker
+
+The Docker image uses the lightweight pandas pipeline by default. PySpark support remains available for local Spark demos through `requirements-spark.txt` / `environment.yml`, but it is intentionally not installed in the default dashboard image to keep VPS deployment fast and stable.
 
 Build and start the dashboard:
 
@@ -109,29 +117,30 @@ python -m src.utils.excel_generator
 ## Project Structure
 
 ```text
-ecommerce_growth_platform/
-├── app/                         # Streamlit dashboard
-├── data/
-│   ├── raw/                     # Kaggle CSV files, not committed
-│   ├── processed/               # generated feature tables, not committed
-│   └── output/                  # generated reports/model outputs, not committed
-├── docs/                        # setup, operations, deployment notes
-├── notebooks/                   # optional exploration
-├── src/
-│   ├── data_pipeline/           # ETL, SQL logic, data quality checks
-│   ├── experiments/             # A/B test validation
-│   ├── models/                  # repeat model, forecasting, segmentation appendix
-│   └── utils/                   # IO, setup validation, Excel report
-├── Dockerfile
-├── docker-compose.yml
-├── environment.yml
-└── requirements.txt
+ecommerce-growth-platform/
+|-- app/                         # Streamlit dashboard
+|-- data/
+|   |-- raw/                     # Kaggle CSV files, not committed
+|   |-- processed/               # generated feature tables, not committed
+|   `-- output/                  # generated reports/model outputs, not committed
+|-- docs/                        # setup, operations, deployment notes
+|-- notebooks/                   # optional exploration
+|-- src/
+|   |-- data_pipeline/           # ETL, SQL logic, data quality checks
+|   |-- experiments/             # A/B test validation
+|   |-- models/                  # repeat model, forecasting, segmentation appendix
+|   `-- utils/                   # IO, setup validation, Excel report
+|-- Dockerfile
+|-- docker-compose.yml
+|-- environment.yml
+|-- requirements-spark.txt       # optional Spark support
+`-- requirements.txt             # lightweight Docker/pandas runtime
 ```
 
 ## Notes
 
 - The default public workflow uses `--engine pandas` because the Olist dataset is small enough for fast local processing.
-- PySpark support is included to demonstrate scalable data engineering architecture.
+- PySpark support is included to demonstrate scalable data engineering architecture; install `requirements-spark.txt` or use `environment.yml` when Spark is needed.
 - On Windows, local Spark writes may require `HADOOP_HOME/bin/winutils.exe`; pandas mode avoids that friction.
 - Generated files under `data/processed/` and `data/output/` are intentionally ignored.
 

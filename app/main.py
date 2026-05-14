@@ -624,7 +624,7 @@ with tab_quality:
         )
         quality_view = data_quality_summary[data_quality_summary["status"].isin(check_type)].copy()
         quality_view = format_display_table(quality_view)
-        st.dataframe(quality_view, use_container_width=True, hide_index=True)
+        st.dataframe(quality_view, width="stretch", hide_index=True)
 
 with tab_repeat:
     if repeat_predictions is None:
@@ -772,7 +772,7 @@ with tab_repeat:
             repeat_predictions.head(100),
             category_columns=["first_product_category"],
         )
-        st.dataframe(repeat_table, use_container_width=True, hide_index=True)
+        st.dataframe(repeat_table, width="stretch", hide_index=True)
 
 with tab_forecast:
     forecast_source = state_category_daily_sales if state_category_daily_sales is not None else category_daily_sales
@@ -898,7 +898,7 @@ with tab_forecast:
             if "product_category" in forecast_table.columns:
                 forecast_table["product_category"] = forecast_table["product_category"].map(format_category)
             forecast_table = format_display_table(forecast_table)
-            st.dataframe(forecast_table, use_container_width=True, hide_index=True)
+            st.dataframe(forecast_table, width="stretch", hide_index=True)
         except ValueError as exc:
             st.warning(str(exc))
 
@@ -1027,7 +1027,7 @@ with tab_experiments:
         )
         with result_cols[0]:
             section_header("Conversion Z-Test", "Validates whether treatment conversion differs from control.")
-            st.dataframe(conversion_df, use_container_width=True, hide_index=True)
+            st.dataframe(conversion_df, width="stretch", hide_index=True)
         with result_cols[1]:
             section_header("Order Value T-Test", "Validates whether treatment order value differs from control.")
-            st.dataframe(order_value_df, use_container_width=True, hide_index=True)
+            st.dataframe(order_value_df, width="stretch", hide_index=True)

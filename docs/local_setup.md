@@ -13,6 +13,8 @@ conda env create -f environment.yml
 conda activate ecommerce-growth
 ```
 
+`environment.yml` installs `requirements-spark.txt`, which includes the optional PySpark dependency for local Spark demos. The Docker image uses `requirements.txt` only, because the deployed dashboard and default pipeline run in pandas mode.
+
 Update it later if dependencies change:
 
 ```bash
@@ -28,7 +30,14 @@ From the project root:
 python -m src.utils.validate_setup
 ```
 
-This checks Python packages, Java/PySpark availability, and required raw data files.
+This checks the default Python packages and required raw data files.
+By default, Spark is treated as optional so the same check works for the lightweight Docker/pandas workflow.
+
+To validate the optional Spark runtime as well:
+
+```bash
+python -m src.utils.validate_setup --with-spark
+```
 
 ## `python file.py` vs `python -m package.module`
 
