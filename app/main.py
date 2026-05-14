@@ -51,6 +51,18 @@ def apply_theme() -> None:
         [data-testid="stSidebar"] {
             background: #111827;
             border-right: 1px solid rgba(148, 163, 184, 0.16);
+            min-width: 430px;
+            max-width: 430px;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] {
+            max-height: 17rem;
+            overflow-y: auto;
+            align-items: flex-start;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+            align-items: flex-start;
         }
 
         [data-testid="stAppViewContainer"] .main .block-container {
@@ -365,17 +377,16 @@ def sidebar_filters(fact_orders: pd.DataFrame) -> pd.DataFrame:
 
     states = sorted(fact_orders["customer_state"].dropna().unique().tolist())
     selected_states = st.sidebar.multiselect("Customer states", states, default=states[:])
+    st.sidebar.caption(f"{len(selected_states)} of {len(states)} states selected")
 
     categories = sorted(fact_orders["product_category"].dropna().unique().tolist())
-    default_categories = (
-        fact_orders.groupby("product_category")["payment_value"].sum().sort_values(ascending=False).head(12).index.tolist()
-    )
     selected_categories = st.sidebar.multiselect(
         "Categories",
         categories,
-        default=default_categories,
+        default=categories[:],
         format_func=format_category,
     )
+    st.sidebar.caption(f"{len(selected_categories)} of {len(categories)} categories selected")
 
     filtered = fact_orders.copy()
     if len(date_range) == 2:
@@ -391,15 +402,7 @@ def sidebar_filters(fact_orders: pd.DataFrame) -> pd.DataFrame:
     if selected_categories:
         filtered = filtered[filtered["product_category"].isin(selected_categories)]
 
-    report_path = OUTPUT_DIR / "ecommerce_growth_report.xlsx"
-    st.sidebar.divider()
-    st.sidebar.subheader("Artifacts")
-    if report_path.exists():
-        st.sidebar.success(f"Excel report ready: {report_path.name}")
-    else:
-        st.sidebar.info("Excel report not generated yet.")
-
-    st.sidebar.caption("Use Ctrl+C in the terminal to stop Streamlit.")
+    st.sidebar.caption("Selections update the executive view instantly.")
     return filtered
 
 
