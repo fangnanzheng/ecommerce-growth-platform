@@ -698,15 +698,26 @@ with tab_repeat:
             ordered=True,
         )
         propensity_counts = propensity_counts.sort_values("propensity_band")
-        propensity_fig = px.bar(
-            propensity_counts,
-            x="propensity_band",
-            y="customers",
+        band_colors = {"Low": ACCENT_2, "Medium": WARNING, "High": "#ef4444"}
+        propensity_fig = go.Figure(
+            go.Bar(
+                x=propensity_counts["propensity_band"].astype(str),
+                y=propensity_counts["customers"],
+                marker_color=[band_colors[band] for band in propensity_counts["propensity_band"].astype(str)],
+                width=0.42,
+                hovertemplate="Band: %{x}<br>Customers: %{y:,.0f}<extra></extra>",
+            )
+        )
+        propensity_fig.update_layout(
             title="Repeat Propensity Bands",
-            labels={"propensity_band": "Propensity band", "customers": "Customers"},
-            color="propensity_band",
-            category_orders={"propensity_band": ["Low", "Medium", "High"]},
-            color_discrete_map={"Low": ACCENT_2, "Medium": WARNING, "High": "#ef4444"},
+            xaxis_title="Propensity band",
+            yaxis_title="Customers",
+            bargap=0.45,
+            showlegend=False,
+        )
+        propensity_fig.update_xaxes(
+            categoryorder="array",
+            categoryarray=["Low", "Medium", "High"],
         )
         repeat_cols[0].plotly_chart(chart_style(propensity_fig, 390), width="stretch")
 
