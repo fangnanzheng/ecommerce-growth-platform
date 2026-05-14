@@ -1,6 +1,9 @@
 services:
   dashboard:
-    build: .
+    build:
+      context: .
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
     container_name: ecommerce-growth-dashboard
     ports:
       - "8501:8501"
@@ -10,7 +13,10 @@ services:
       - PYTHONPATH=/app
 
   pipeline:
-    build: .
+    build:
+      context: .
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
     container_name: ecommerce-growth-pipeline
     profiles:
       - batch

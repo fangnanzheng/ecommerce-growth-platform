@@ -92,6 +92,49 @@ docker compose --profile batch run --rm pipeline
 
 The `data/` folder is mounted as a volume, so raw data and generated outputs stay outside the image.
 
+If package downloads are slow on a mainland China VPS, build with a PyPI mirror:
+
+```bash
+PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple docker compose build dashboard pipeline
+```
+
+## Cloud Deployment
+
+This project has been deployed and verified on a Tencent Cloud Lighthouse Ubuntu 24.04 server with 4 vCPU, 4 GB RAM, 40 GB disk, and Docker Compose.
+
+High-level deployment flow:
+
+```bash
+# 1. Install Docker and Docker Compose on the server
+sudo apt update
+sudo apt install -y docker.io docker-compose-v2 git unzip
+sudo systemctl enable --now docker
+
+# 2. Get the repository
+git clone https://github.com/fangnanzheng/ecommerce-growth-platform.git
+cd ecommerce-growth-platform
+
+# 3. Upload Kaggle CSV files to data/raw/
+
+# 4. Build with a mirror when needed
+PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple docker compose build dashboard pipeline
+
+# 5. Generate processed tables and model/report outputs
+docker compose --profile batch run --rm pipeline
+
+# 6. Start the dashboard
+docker compose up -d dashboard
+docker update --restart unless-stopped ecommerce-growth-dashboard
+```
+
+Open:
+
+```text
+http://<SERVER_PUBLIC_IP>:8501
+```
+
+The cloud firewall/security group must allow inbound TCP traffic on port `8501`. For production-style hardening, add a domain, Nginx reverse proxy, and HTTPS; for a portfolio demo, direct Streamlit access is sufficient.
+
 ## Main Commands
 
 ```bash

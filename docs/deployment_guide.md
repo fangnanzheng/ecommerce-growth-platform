@@ -35,6 +35,12 @@ The raw files should not be committed to Git.
 
 ## Run the Batch Pipeline
 
+If package downloads are slow, build with a PyPI mirror first:
+
+```bash
+PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple docker compose build dashboard pipeline
+```
+
 ```bash
 docker compose --profile batch run --rm pipeline
 ```
@@ -78,3 +84,4 @@ docker compose down
 - `.dockerignore` excludes raw and generated data from image layers.
 - The Docker image intentionally uses the lightweight pandas pipeline dependencies. PySpark remains available for local demos through `requirements-spark.txt` / `environment.yml`.
 - For a public demo, restrict access to the Streamlit port through firewall/security group rules if needed.
+- On Tencent Cloud or other mainland China servers, Docker Hub and PyPI can be slow or unstable. Configure a Docker registry mirror and use `PIP_INDEX_URL` during image builds.
