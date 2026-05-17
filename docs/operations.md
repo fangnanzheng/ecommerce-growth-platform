@@ -15,7 +15,7 @@ This executes:
 3. Customer segmentation appendix
 4. Repeat purchase propensity model
 5. Default SARIMAX forecast
-6. Experiment readout
+6. Semi-synthetic promotion experiment
 7. Excel report generation
 
 Outputs are written to:

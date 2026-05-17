@@ -10,7 +10,7 @@ The demo website can be accessed via [http://124.222.219.226:8501](http://124.22
 - **Growth analytics:** revenue trends, state/category mix, delivery friction, and repeat-purchase behavior.
 - **Machine learning:** first-order repeat purchase propensity model with feature drivers and top-k lift analysis.
 - **Forecasting:** state/category revenue forecasts with SARIMAX, ETS, and moving-average options.
-- **Experimentation:** deterministic demo split, conversion Z-test, order-value Welch T-test, p-values, and sample-size planning.
+- **Experimentation:** semi-synthetic sparse promotion experiment, difference-in-means benchmark, and sample-split R-learner/AIPW uplift test.
 - **BI delivery:** Streamlit dashboard and automated Excel management report.
 - **Deployment:** Docker and Docker Compose for local or VPS deployment.
 
@@ -152,7 +152,7 @@ python -m src.models.repeat_purchase_predict
 # Forecast only
 python -m src.models.forecasting --method sarimax --periods 30
 
-# Experiment readout only
+# Semi-synthetic experiment only
 python -m src.experiments.ab_testing
 
 # Excel report only
@@ -172,7 +172,7 @@ ecommerce-growth-platform/
 |-- notebooks/                   # optional exploration
 |-- src/
 |   |-- data_pipeline/           # ETL, SQL logic, data quality checks
-|   |-- experiments/             # A/B test validation
+|   |-- experiments/             # semi-synthetic uplift validation
 |   |-- models/                  # repeat model, forecasting, segmentation appendix
 |   `-- utils/                   # IO, setup validation, Excel report
 |-- Dockerfile

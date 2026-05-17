@@ -450,6 +450,7 @@ repeat_feature_importance = load_optional_csv(OUTPUT_DIR / "repeat_feature_impor
 repeat_topk_summary = load_optional_csv(OUTPUT_DIR / "repeat_topk_summary.csv")
 data_quality_summary = load_optional_csv(OUTPUT_DIR / "data_quality_summary.csv")
 sales_forecast = load_optional_csv(OUTPUT_DIR / "sales_forecast.csv")
+semi_synthetic_segment_profile = load_optional_csv(OUTPUT_DIR / "semi_synthetic_segment_profile.csv")
 repeat_metrics = read_optional_json(OUTPUT_DIR / "repeat_purchase_metrics.json")
 ab_results = read_optional_json(OUTPUT_DIR / "ab_test_results.json")
 
@@ -926,131 +927,125 @@ with tab_forecast:
             st.warning(str(exc))
 
 with tab_experiments:
-    conversion = ab_results.get("conversion_test", {})
-    order_value = ab_results.get("order_value_test", {})
-    if not conversion:
-        st.warning("A/B testing output is missing. Run python -m src.experiments.ab_testing")
+    dgp = ab_results.get("dgp", {})
+    naive = ab_results.get("naive_difference_in_means", {})
+    r_learner = ab_results.get("r_learner_aipw", {})
+    if not dgp:
+        st.warning("Semi-synthetic experiment output is missing. Run python -m src.experiments.ab_testing")
     else:
         section_header(
-            "Experiment Readout",
-            "This module demonstrates how a growth team would validate an experiment before making a rollout decision.",
+            "Semi-Synthetic Experiment",
+            "A sparse promotion simulation shows why heterogeneous treatment effect modeling can matter for growth decisions.",
         )
-        with st.expander("Experiment design and test statistics", expanded=True):
-            st.markdown("**Demo assignment.** The portfolio dataset is historical, so we simulate a deterministic split:")
+        with st.expander("DGP and test design", expanded=True):
+            st.markdown(
+                "**Business scenario.** A 60-day promotion is launched for "
+                f"**{dgp.get('target_category_display', 'Health beauty')}**. "
+                "Olist customer covariates stay real; treatment and post-promotion revenue are generated synthetically."
+            )
+            st.markdown("**Assignment.** Customers are randomly assigned before outcomes are generated:")
+            st.latex(r"W_i \sim \mathrm{Bernoulli}(0.5)")
+            st.markdown("**Outcome.** The observed synthetic revenue is:")
+            st.latex(r"Y_i = Y_i(0) + W_i\tau_i + \varepsilon_i")
+            st.markdown("**Sparse treatment effect.** Only a small responder group receives large incremental revenue:")
             st.latex(
                 r"""
-                variant_i =
+                \tau_i =
                 \begin{cases}
-                control, & hash(order\_id_i) \bmod 2 = 0 \\
-                treatment, & hash(order\_id_i) \bmod 2 = 1
+                720 + 0.2\cdot \min(\text{first\_order\_value}_i, 500),
+                & \hat p^{repeat}_i \ge q_{0.85},\ state_i\in\{SP,RJ,MG\},\ category_i=\text{Health beauty} \\
+                0, & \text{otherwise}
                 \end{cases}
                 """
             )
-            st.markdown("In production, this should be user-level random assignment with exposure logging.")
-            st.markdown("**Conversion Z-test.** Let `x_c`, `x_t` be converted orders and `n_c`, `n_t` be sample sizes:")
-            st.latex(
-                r"""
-                \hat p_c=\frac{x_c}{n_c}, \quad
-                \hat p_t=\frac{x_t}{n_t}, \quad
-                \hat p=\frac{x_c+x_t}{n_c+n_t}
-                """
-            )
-            st.latex(
-                r"""
-                z =
-                \frac{\hat p_t-\hat p_c}
-                {\sqrt{\hat p(1-\hat p)\left(\frac{1}{n_c}+\frac{1}{n_t}\right)}}
-                """
-            )
             st.markdown(
-                "**Order-value Welch T-test.** Let the two groups have means `x_bar_c`, `x_bar_t` and sample variances `s_c^2`, `s_t^2`:"
+                "**Comparison.** Difference-in-means tests the global ATE. "
+                "The R-learner uses one half of customers to learn CATE and the other half to test the top predicted segment with AIPW scores."
             )
             st.latex(
                 r"""
-                t =
-                \frac{\bar x_t-\bar x_c}
-                {\sqrt{\frac{s_t^2}{n_t}+\frac{s_c^2}{n_c}}}
+                \hat\psi_i =
+                \hat\tau(X_i)
+                + \frac{W_i}{e}(Y_i-\hat\mu_1(X_i))
+                - \frac{1-W_i}{1-e}(Y_i-\hat\mu_0(X_i))
                 """
             )
-            st.markdown("Both tests are two-sided. We use `alpha = 0.05` for the significance flag.")
 
         exp_cols = st.columns(5)
         with exp_cols[0]:
-            metric_card("Control CVR", f"{conversion.get('control_conversion_rate', 0):.2%}", "Baseline variant")
+            metric_card("Responder Share", f"{dgp.get('true_responder_rate', 0):.2%}", "Sparse true uplift group")
         with exp_cols[1]:
-            metric_card("Treatment CVR", f"{conversion.get('treatment_conversion_rate', 0):.2%}", "New variant")
+            metric_card("True Global ATE", f"R$ {dgp.get('true_global_ate', 0):.2f}", "Average over all customers")
         with exp_cols[2]:
-            metric_card("Absolute Lift", f"{conversion.get('absolute_lift', 0):.2%}", "Treatment minus control")
+            metric_card("DIM p-value", f"{naive.get('p_value', 0):.4f}", "Global mean test")
         with exp_cols[3]:
-            metric_card("Z-test p-value", f"{conversion.get('p_value', 0):.4f}", "Conversion evidence")
+            metric_card("Targeted AIPW", f"R$ {r_learner.get('estimate', 0):.2f}", "Top CATE segment")
         with exp_cols[4]:
-            metric_card("T-test p-value", f"{order_value.get('p_value', 0):.4f}", "Order value evidence")
+            metric_card("R-learner p-value", f"{r_learner.get('p_value', 0):.4f}", "Holdout segment test")
 
-        sample_size = ab_results.get("estimated_sample_size_per_group")
-        if sample_size:
+        if not naive.get("is_significant_05") and r_learner.get("is_significant_05"):
             insight_card(
-                "Power planning",
-                f"Given the observed baseline and target lift assumption, the estimated sample size is {sample_size:,} observations per group.",
+                "Why ML helps here",
+                "The global average-effect test does not reject zero, but the sample-split R-learner finds a small holdout segment with statistically credible uplift.",
             )
 
+        comparison_df = pd.DataFrame(
+            [
+                {
+                    "Method": naive.get("method"),
+                    "Estimand": naive.get("estimand"),
+                    "Estimate": naive.get("estimate"),
+                    "Std error": naive.get("standard_error"),
+                    "Statistic": naive.get("statistic"),
+                    "P-value": naive.get("p_value"),
+                    "Reject at 5%": "Yes" if naive.get("is_significant_05") else "No",
+                },
+                {
+                    "Method": r_learner.get("method"),
+                    "Estimand": r_learner.get("estimand"),
+                    "Estimate": r_learner.get("estimate"),
+                    "Std error": r_learner.get("standard_error"),
+                    "Statistic": r_learner.get("statistic"),
+                    "P-value": r_learner.get("p_value"),
+                    "Reject at 5%": "Yes" if r_learner.get("is_significant_05") else "No",
+                },
+            ]
+        )
+        for column in ["Estimate", "Std error", "Statistic", "P-value"]:
+            comparison_df[column] = comparison_df[column].map(
+                lambda value: f"{value:.4f}" if isinstance(value, (float, int)) else value
+            )
+        st.dataframe(comparison_df, width="stretch", hide_index=True)
+
         result_cols = st.columns([1, 1])
-        conversion_df = pd.DataFrame(
-            {
-                "Metric": [
-                    "Control conversion rate",
-                    "Treatment conversion rate",
-                    "Absolute lift",
-                    "Relative lift",
-                    "Z statistic",
-                    "Z-test p-value",
-                    "Significant at 5%",
-                ],
-                "Value": [
-                    conversion.get("control_conversion_rate"),
-                    conversion.get("treatment_conversion_rate"),
-                    conversion.get("absolute_lift"),
-                    conversion.get("relative_lift"),
-                    conversion.get("z_statistic"),
-                    conversion.get("p_value"),
-                    conversion.get("is_significant_05"),
-                ],
-            }
-        )
-        order_value_df = pd.DataFrame(
-            {
-                "Metric": [
-                    "Control mean order value",
-                    "Treatment mean order value",
-                    "Mean difference",
-                    "T statistic",
-                    "T-test p-value",
-                    "Significant at 5%",
-                ],
-                "Value": [
-                    order_value.get("control_mean_order_value"),
-                    order_value.get("treatment_mean_order_value"),
-                    order_value.get("mean_difference"),
-                    order_value.get("t_statistic"),
-                    order_value.get("p_value"),
-                    order_value.get("is_significant_05"),
-                ],
-            }
-        )
-        conversion_df["Value"] = conversion_df["Value"].map(
-            lambda value: "Yes" if value is True else "No" if value is False else value
-        )
-        order_value_df["Value"] = order_value_df["Value"].map(
-            lambda value: "Yes" if value is True else "No" if value is False else value
-        )
-        conversion_df["Value"] = conversion_df["Value"].map(
-            lambda value: f"{value:.4f}" if isinstance(value, float) else str(value)
-        )
-        order_value_df["Value"] = order_value_df["Value"].map(
-            lambda value: f"{value:.4f}" if isinstance(value, float) else str(value)
-        )
         with result_cols[0]:
-            section_header("Conversion Z-Test", "Validates whether treatment conversion differs from control.")
-            st.dataframe(conversion_df, width="stretch", hide_index=True)
+            section_header("DGP Summary", "The true effect is known because the outcome is synthetic.")
+            dgp_df = pd.DataFrame(
+                {
+                    "Metric": [
+                        "Customers",
+                        "Treated customers",
+                        "Control customers",
+                        "True responder rate",
+                        "True responder ATE",
+                        "Base learner",
+                    ],
+                    "Value": [
+                        f"{dgp.get('customers', 0):,}",
+                        f"{dgp.get('treated_customers', 0):,}",
+                        f"{dgp.get('control_customers', 0):,}",
+                        f"{dgp.get('true_responder_rate', 0):.2%}",
+                        f"R$ {dgp.get('true_responder_ate', 0):.2f}",
+                        dgp.get("base_learner"),
+                    ],
+                }
+            )
+            st.dataframe(dgp_df, width="stretch", hide_index=True)
         with result_cols[1]:
-            section_header("Order Value T-Test", "Validates whether treatment order value differs from control.")
-            st.dataframe(order_value_df, width="stretch", hide_index=True)
+            section_header("Target Segment", "The segment is chosen only by CATE predictions from the training half.")
+            if semi_synthetic_segment_profile is not None:
+                profile = semi_synthetic_segment_profile.copy()
+                profile = format_display_table(profile)
+                st.dataframe(profile, width="stretch", hide_index=True)
+            else:
+                st.info("Segment profile output is missing.")

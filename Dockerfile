@@ -18,7 +18,8 @@ RUN python -m pip install --no-cache-dir --prefer-binary \
     scipy==1.13.1 \
     scikit-learn==1.5.2 \
     statsmodels==0.14.4 \
-    pyarrow==15.0.2
+    pyarrow==15.0.2 \
+    xgboost==2.1.4
 RUN python -m pip install --no-cache-dir --prefer-binary \
     plotly==5.24.1 \
     openpyxl==3.1.5 \

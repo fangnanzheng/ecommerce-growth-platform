@@ -38,15 +38,21 @@ def generate_excel_report(output_dir: Path, report_path: Path) -> Path:
     summary.title = "Executive Summary"
 
     repeat_metrics = read_json(output_dir / "repeat_purchase_metrics.json")
-    ab_results = read_json(output_dir / "ab_test_results.json")
+    experiment_results = read_json(output_dir / "ab_test_results.json")
 
     summary.append(["Metric", "Value"])
     for key, value in repeat_metrics.items():
         summary.append([f"Repeat purchase {key}", value])
 
-    conversion = ab_results.get("conversion_test", {})
-    for key, value in conversion.items():
-        summary.append([f"AB {key}", value])
+    for key, value in experiment_results.get("dgp", {}).items():
+        if key in {"experiment_type", "target_category_display", "true_responder_rate", "true_global_ate"}:
+            summary.append([f"Experiment {key}", value])
+    for key, value in experiment_results.get("naive_difference_in_means", {}).items():
+        if key in {"estimate", "p_value", "is_significant_05"}:
+            summary.append([f"DIM {key}", value])
+    for key, value in experiment_results.get("r_learner_aipw", {}).items():
+        if key in {"estimate", "p_value", "is_significant_05", "true_selected_ate"}:
+            summary.append([f"R-learner {key}", value])
 
     for cell in summary[1]:
         cell.fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
@@ -62,6 +68,8 @@ def generate_excel_report(output_dir: Path, report_path: Path) -> Path:
         "Repeat by Category": "repeat_category_summary.csv",
         "Repeat Drivers": "repeat_feature_importance.csv",
         "Repeat Top K": "repeat_topk_summary.csv",
+        "Semi Synthetic Segment": "semi_synthetic_segment_profile.csv",
+        "Semi Synthetic Sample": "semi_synthetic_experiment_sample.csv",
         "Sales Forecast": "sales_forecast.csv",
     }
     for sheet_name, filename in csv_sheets.items():
